@@ -247,7 +247,7 @@
 
     <!-- SUPABASE SDK -->
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-    <script>
+    <script type="module">
         const supabaseUrl = 'https://qjzftprfqhwmzjfodscp.supabase.co';
         const supabaseAnonKey = 'sb_publishable_5WESGI70ACvNrZ4dR1hVoA_65uLmNZ8';
         const supabase = supabase.createClient(supabaseUrl, supabaseAnonKey);
@@ -335,7 +335,13 @@
                     }
                 } catch (err) {
                     console.error('Fetch error:', err);
-                    connectingOverlay.innerHTML = `<p style="color: #ef4444; padding: 20px; text-align: center;">Fout bij laden: ${err.message}<br><small>Herlaad de pagina of check de Supabase schema cache.</small></p>`;
+                    connectingOverlay.innerHTML = `
+                        <div style="color: #ef4444; padding: 20px; text-align: center;">
+                            <p style="font-weight: 600; margin-bottom: 8px;">Fout bij laden van berichten</p>
+                            <p style="font-size: 12px; margin-bottom: 12px;">${err.message}</p>
+                            <p style="font-size: 11px; color: #64748b;">Als je net de 'user_email' kolom hebt toegevoegd, moet je waarschijnlijk de <b>Supabase schema cache</b> verversen met:<br><code>NOTIFY pgrst, 'reload schema';</code></p>
+                        </div>
+                    `;
                 }
             };
 
@@ -392,7 +398,7 @@
                 await fetchMessages(offset);
                 loadMoreBtn.textContent = 'Oudere berichten laden...';
             });
-            loginButton.addEventListener('click', () => supabase.auth.signInWithOAuth({ provider: 'google', options: { redirectTo: window.location.origin } }));
+            loginButton.addEventListener('click', () => supabase.auth.signInWithOAuth({ provider: 'google', options: { redirectTo: window.location.href } }));
             logoutButton.addEventListener('click', () => supabase.auth.signOut());
             sendButton.addEventListener('click', sendMessage);
             messageInput.addEventListener('keypress', (e) => { if (e.key === 'Enter') sendMessage(); });
