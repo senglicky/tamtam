@@ -250,7 +250,7 @@
     <script type="module">
         const supabaseUrl = 'https://qjzftprfqhwmzjfodscp.supabase.co';
         const supabaseAnonKey = 'sb_publishable_5WESGI70ACvNrZ4dR1hVoA_65uLmNZ8';
-        const supabase = supabase.createClient(supabaseUrl, supabaseAnonKey);
+        const supabaseClient = supabase.createClient(supabaseUrl, supabaseAnonKey);
 
         document.addEventListener('DOMContentLoaded', async () => {
             const connectingOverlay = document.getElementById('connectingOverlay');
@@ -315,7 +315,7 @@
             const fetchMessages = async (offset = 0) => {
                 const limit = offset === 0 ? MAX_VISIBLE_MESSAGES : PAGINATION_INTERVAL;
                 try {
-                    const { data, error } = await supabase.from('messages').select('*').order('created_at', { ascending: false }).range(offset, offset + limit - 1);
+                    const { data, error } = await supabaseClient.from('messages').select('*').order('created_at', { ascending: false }).range(offset, offset + limit - 1);
 
                     if (error) throw error;
 
