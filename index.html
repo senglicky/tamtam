@@ -28,11 +28,13 @@
         }
 
         body {
-            background-color: var(--bg-light);
+            background-color: transparent;
             display: flex;
             justify-content: center;
             align-items: center;
-            min-height: 100vh;
+            height: 100vh;
+            margin: 0;
+            overflow: hidden;
         }
 
         .background-grid {
@@ -49,9 +51,9 @@
         }
 
         .shoutbox-container {
-            width: 95%;
+            width: 100%;
             max-width: 500px;
-            height: 600px;
+            height: 100%;
             background: var(--card-bg);
             border-radius: var(--border-radius);
             box-shadow: var(--shadow);
