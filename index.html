@@ -314,21 +314,28 @@
 
             const fetchMessages = async (offset = 0) => {
                 const limit = offset === 0 ? MAX_VISIBLE_MESSAGES : PAGINATION_INTERVAL;
-                const { data } = await supabase.from('messages').select('*').order('created_at', { ascending: false }).range(offset, offset + limit - 1);
+                try {
+                    const { data, error } = await supabase.from('messages').select('*').order('created_at', { ascending: false }).range(offset, offset + limit - 1);
 
-                if (offset === 0) {
-                    connectingOverlay.style.display = 'none';
-                    chatArea.querySelectorAll('.message-bubble').forEach(b => b.remove());
-                    messageCount = 0;
-                    if (data && data.length > 0) {
-                        [...data].reverse().forEach(msg => appendMessageUI(msg.content, msg.user_name, msg.created_at));
-                        if (data.length === MAX_VISIBLE_MESSAGES) loadMoreBtn.style.display = 'block';
+                    if (error) throw error;
+
+                    if (offset === 0) {
+                        connectingOverlay.style.display = 'none';
+                        chatArea.querySelectorAll('.message-bubble').forEach(b => b.remove());
+                        messageCount = 0;
+                        if (data && data.length > 0) {
+                            [...data].reverse().forEach(msg => appendMessageUI(msg.content, msg.user_name, msg.created_at));
+                            if (data.length === MAX_VISIBLE_MESSAGES) loadMoreBtn.style.display = 'block';
+                        }
+                    } else {
+                        if (data && data.length > 0) {
+                            data.forEach(msg => appendMessageUI(msg.content, msg.user_name, msg.created_at, true));
+                            if (data.length < PAGINATION_INTERVAL) loadMoreBtn.style.display = 'none';
+                        } else loadMoreBtn.style.display = 'none';
                     }
-                } else {
-                    if (data && data.length > 0) {
-                        data.forEach(msg => appendMessageUI(msg.content, msg.user_name, msg.created_at, true));
-                        if (data.length < PAGINATION_INTERVAL) loadMoreBtn.style.display = 'none';
-                    } else loadMoreBtn.style.display = 'none';
+                } catch (err) {
+                    console.error('Fetch error:', err);
+                    connectingOverlay.innerHTML = `<p style="color: #ef4444; padding: 20px; text-align: center;">Fout bij laden: ${err.message}<br><small>Herlaad de pagina of check de Supabase schema cache.</small></p>`;
                 }
             };
 
@@ -337,7 +344,23 @@
                 const text = messageInput.value.trim();
                 if (!text) return;
                 messageInput.value = '';
-                await supabase.from('messages').insert([{ content: text, user_name: currentUser.user_metadata.full_name || currentUser.email, user_email: currentUser.email }]);
+                messageInput.disabled = true;
+
+                try {
+                    const { error } = await supabase.from('messages').insert([{
+                        content: text,
+                        user_name: currentUser.user_metadata.full_name || currentUser.email,
+                        user_email: currentUser.email
+                    }]);
+                    if (error) throw error;
+                } catch (err) {
+                    console.error('Send error:', err);
+                    alert('Fout bij verzenden: ' + err.message);
+                    messageInput.value = text;
+                } finally {
+                    messageInput.disabled = false;
+                    messageInput.focus();
+                }
             };
 
             const updateAuthUI = (user) => {
