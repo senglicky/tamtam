@@ -252,41 +252,40 @@
         const supabaseAnonKey = 'sb_publishable_5WESGI70ACvNrZ4dR1hVoA_65uLmNZ8';
         const supabaseClient = supabase.createClient(supabaseUrl, supabaseAnonKey);
 
-        document.addEventListener('DOMContentLoaded', async () => {
-            const connectingOverlay = document.getElementById('connectingOverlay');
-            const chatArea = document.getElementById('chatArea');
-            const messageInput = document.getElementById('messageInput');
-            const sendButton = document.getElementById('sendButton');
-            const loginButton = document.getElementById('loginButton');
-            const logoutButton = document.getElementById('logoutButton');
-            const userStatus = document.getElementById('userStatus');
-            const userNameDisplay = document.getElementById('userName');
+        const connectingOverlay = document.getElementById('connectingOverlay');
+        const chatArea = document.getElementById('chatArea');
+        const messageInput = document.getElementById('messageInput');
+        const sendButton = document.getElementById('sendButton');
+        const loginButton = document.getElementById('loginButton');
+        const logoutButton = document.getElementById('logoutButton');
+        const userStatus = document.getElementById('userStatus');
+        const userNameDisplay = document.getElementById('userName');
 
-            let currentUser = null;
-            let messageCount = 0;
-            const MAX_VISIBLE_MESSAGES = 50;
-            const PAGINATION_INTERVAL = 50;
+        let currentUser = null;
+        let messageCount = 0;
+        const MAX_VISIBLE_MESSAGES = 50;
+        const PAGINATION_INTERVAL = 50;
 
-            const loadMoreBtn = document.createElement('button');
-            loadMoreBtn.style.cssText = 'display: none; margin: 0 auto 20px auto; font-size: 13px; color: #64748b; background: #f8fafc; border: 1px solid #e2e8f0; padding: 8px 16px; border-radius: 20px; cursor: pointer;';
-            loadMoreBtn.textContent = 'Oudere berichten laden...';
-            chatArea.prepend(loadMoreBtn);
+        const loadMoreBtn = document.createElement('button');
+        loadMoreBtn.style.cssText = 'display: none; margin: 0 auto 20px auto; font-size: 13px; color: #64748b; background: #f8fafc; border: 1px solid #e2e8f0; padding: 8px 16px; border-radius: 20px; cursor: pointer;';
+        loadMoreBtn.textContent = 'Oudere berichten laden...';
+        chatArea.prepend(loadMoreBtn);
 
-            const appendMessageUI = (text, sender = 'Anonymous', timestamp = null, prepend = false) => {
-                const messageEl = document.createElement('div');
-                messageEl.className = 'message-bubble';
-                messageEl.style.cssText = 'align-self: stretch; width: 100%; background: #f1f5f9; padding: 14px 18px; border-radius: 12px; margin-bottom: 16px; font-size: 14px; color: #334155; animation: slideIn 0.3s ease-out; box-shadow: 0 1px 2px rgba(0,0,0,0.03);';
+        const appendMessageUI = (text, sender = 'Anonymous', timestamp = null, prepend = false) => {
+            const messageEl = document.createElement('div');
+            messageEl.className = 'message-bubble';
+            messageEl.style.cssText = 'align-self: stretch; width: 100%; background: #f1f5f9; padding: 14px 18px; border-radius: 12px; margin-bottom: 16px; font-size: 14px; color: #334155; animation: slideIn 0.3s ease-out; box-shadow: 0 1px 2px rgba(0,0,0,0.03);';
 
-                let timeStr = '';
-                if (timestamp) {
-                    const date = new Date(timestamp);
-                    timeStr = date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) + ' ' + date.toLocaleDateString([], { day: '2-digit', month: '2-digit' });
-                } else {
-                    const now = new Date();
-                    timeStr = now.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) + ' ' + now.toLocaleDateString([], { day: '2-digit', month: '2-digit' });
-                }
+            let timeStr = '';
+            if (timestamp) {
+                const date = new Date(timestamp);
+                timeStr = date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) + ' ' + date.toLocaleDateString([], { day: '2-digit', month: '2-digit' });
+            } else {
+                const now = new Date();
+                timeStr = now.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) + ' ' + now.toLocaleDateString([], { day: '2-digit', month: '2-digit' });
+            }
 
-                messageEl.innerHTML = `
+            messageEl.innerHTML = `
                     <div style="display: flex; justify-content: space-between; align-items: baseline; gap: 12px; margin-bottom: 8px; border-bottom: 1px solid rgba(0,0,0,0.05); padding-bottom: 4px;">
                         <div style="font-size: 11px; color: var(--primary-green); font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px;">${sender}</div>
                         <div style="font-size: 10px; color: #94a3b8; white-space: nowrap;">${timeStr}</div>
@@ -294,115 +293,114 @@
                     <div style="line-height: 1.6; word-wrap: break-word;">${text}</div>
                 `;
 
-                if (prepend) {
-                    if (loadMoreBtn.nextSibling) chatArea.insertBefore(messageEl, loadMoreBtn.nextSibling);
-                    else chatArea.appendChild(messageEl);
-                } else {
-                    chatArea.appendChild(messageEl);
-                    messageCount++;
-                    if (messageCount > MAX_VISIBLE_MESSAGES) {
-                        const bubbles = chatArea.querySelectorAll('.message-bubble');
-                        if (bubbles.length > MAX_VISIBLE_MESSAGES) {
-                            bubbles[0].remove();
-                            messageCount--;
-                            loadMoreBtn.style.display = 'block';
-                        }
+            if (prepend) {
+                if (loadMoreBtn.nextSibling) chatArea.insertBefore(messageEl, loadMoreBtn.nextSibling);
+                else chatArea.appendChild(messageEl);
+            } else {
+                chatArea.appendChild(messageEl);
+                messageCount++;
+                if (messageCount > MAX_VISIBLE_MESSAGES) {
+                    const bubbles = chatArea.querySelectorAll('.message-bubble');
+                    if (bubbles.length > MAX_VISIBLE_MESSAGES) {
+                        bubbles[0].remove();
+                        messageCount--;
+                        loadMoreBtn.style.display = 'block';
                     }
-                    chatArea.scrollTop = chatArea.scrollHeight;
                 }
-            };
+                chatArea.scrollTop = chatArea.scrollHeight;
+            }
+        };
 
-            const fetchMessages = async (offset = 0) => {
-                const limit = offset === 0 ? MAX_VISIBLE_MESSAGES : PAGINATION_INTERVAL;
-                try {
-                    const { data, error } = await supabaseClient.from('messages').select('*').order('created_at', { ascending: false }).range(offset, offset + limit - 1);
+        const fetchMessages = async (offset = 0) => {
+            const limit = offset === 0 ? MAX_VISIBLE_MESSAGES : PAGINATION_INTERVAL;
+            try {
+                const { data, error } = await supabaseClient.from('messages').select('*').order('created_at', { ascending: false }).range(offset, offset + limit - 1);
 
-                    if (error) throw error;
+                if (error) throw error;
 
-                    if (offset === 0) {
-                        connectingOverlay.style.display = 'none';
-                        chatArea.querySelectorAll('.message-bubble').forEach(b => b.remove());
-                        messageCount = 0;
-                        if (data && data.length > 0) {
-                            [...data].reverse().forEach(msg => appendMessageUI(msg.content, msg.user_name, msg.created_at));
-                            if (data.length === MAX_VISIBLE_MESSAGES) loadMoreBtn.style.display = 'block';
-                        }
-                    } else {
-                        if (data && data.length > 0) {
-                            data.forEach(msg => appendMessageUI(msg.content, msg.user_name, msg.created_at, true));
-                            if (data.length < PAGINATION_INTERVAL) loadMoreBtn.style.display = 'none';
-                        } else loadMoreBtn.style.display = 'none';
+                if (offset === 0) {
+                    connectingOverlay.style.display = 'none';
+                    chatArea.querySelectorAll('.message-bubble').forEach(b => b.remove());
+                    messageCount = 0;
+                    if (data && data.length > 0) {
+                        [...data].reverse().forEach(msg => appendMessageUI(msg.content, msg.user_name, msg.created_at));
+                        if (data.length === MAX_VISIBLE_MESSAGES) loadMoreBtn.style.display = 'block';
                     }
-                } catch (err) {
-                    console.error('Fetch error:', err);
-                    connectingOverlay.innerHTML = `
+                } else {
+                    if (data && data.length > 0) {
+                        data.forEach(msg => appendMessageUI(msg.content, msg.user_name, msg.created_at, true));
+                        if (data.length < PAGINATION_INTERVAL) loadMoreBtn.style.display = 'none';
+                    } else loadMoreBtn.style.display = 'none';
+                }
+            } catch (err) {
+                console.error('Fetch error:', err);
+                connectingOverlay.innerHTML = `
                         <div style="color: #ef4444; padding: 20px; text-align: center;">
                             <p style="font-weight: 600; margin-bottom: 8px;">Fout bij laden van berichten</p>
                             <p style="font-size: 12px; margin-bottom: 12px;">${err.message}</p>
                             <p style="font-size: 11px; color: #64748b;">Als je net de 'user_email' kolom hebt toegevoegd, moet je waarschijnlijk de <b>Supabase schema cache</b> verversen met:<br><code>NOTIFY pgrst, 'reload schema';</code></p>
                         </div>
                     `;
-                }
-            };
+            }
+        };
 
-            const sendMessage = async () => {
-                if (!currentUser) return;
-                const text = messageInput.value.trim();
-                if (!text) return;
-                messageInput.value = '';
+        const sendMessage = async () => {
+            if (!currentUser) return;
+            const text = messageInput.value.trim();
+            if (!text) return;
+            messageInput.value = '';
+            messageInput.disabled = true;
+
+            try {
+                const { error } = await supabaseClient.from('messages').insert([{
+                    content: text,
+                    user_name: currentUser.user_metadata.full_name || currentUser.email,
+                    user_email: currentUser.email
+                }]);
+                if (error) throw error;
+            } catch (err) {
+                console.error('Send error:', err);
+                alert('Fout bij verzenden: ' + err.message);
+                messageInput.value = text;
+            } finally {
+                messageInput.disabled = false;
+                messageInput.focus();
+            }
+        };
+
+        const updateAuthUI = (user) => {
+            currentUser = user;
+            if (user) {
+                loginButton.classList.add('hidden');
+                userStatus.classList.remove('hidden');
+                userNameDisplay.textContent = user.user_metadata.full_name || user.email;
+                messageInput.disabled = false;
+                messageInput.placeholder = "Typ een bericht...";
+            } else {
+                loginButton.classList.remove('hidden');
+                userStatus.classList.add('hidden');
                 messageInput.disabled = true;
+                messageInput.placeholder = "Log in om te chatten...";
+            }
+        };
 
-                try {
-                    const { error } = await supabaseClient.from('messages').insert([{
-                        content: text,
-                        user_name: currentUser.user_metadata.full_name || currentUser.email,
-                        user_email: currentUser.email
-                    }]);
-                    if (error) throw error;
-                } catch (err) {
-                    console.error('Send error:', err);
-                    alert('Fout bij verzenden: ' + err.message);
-                    messageInput.value = text;
-                } finally {
-                    messageInput.disabled = false;
-                    messageInput.focus();
-                }
-            };
+        supabaseClient.auth.onAuthStateChange((event, session) => updateAuthUI(session?.user ?? null));
+        const { data: { session } } = await supabaseClient.auth.getSession();
+        updateAuthUI(session?.user ?? null);
 
-            const updateAuthUI = (user) => {
-                currentUser = user;
-                if (user) {
-                    loginButton.classList.add('hidden');
-                    userStatus.classList.remove('hidden');
-                    userNameDisplay.textContent = user.user_metadata.full_name || user.email;
-                    messageInput.disabled = false;
-                    messageInput.placeholder = "Typ een bericht...";
-                } else {
-                    loginButton.classList.remove('hidden');
-                    userStatus.classList.add('hidden');
-                    messageInput.disabled = true;
-                    messageInput.placeholder = "Log in om te chatten...";
-                }
-            };
+        await fetchMessages();
+        supabaseClient.channel('public:messages').on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'messages' }, p => appendMessageUI(p.new.content, p.new.user_name, p.new.created_at)).subscribe();
 
-            supabaseClient.auth.onAuthStateChange((event, session) => updateAuthUI(session?.user ?? null));
-            const { data: { session } } = await supabaseClient.auth.getSession();
-            updateAuthUI(session?.user ?? null);
-
-            await fetchMessages();
-            supabaseClient.channel('public:messages').on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'messages' }, p => appendMessageUI(p.new.content, p.new.user_name, p.new.created_at)).subscribe();
-
-            loadMoreBtn.addEventListener('click', async () => {
-                const offset = chatArea.querySelectorAll('.message-bubble').length;
-                loadMoreBtn.textContent = 'Laden...';
-                await fetchMessages(offset);
-                loadMoreBtn.textContent = 'Oudere berichten laden...';
-            });
-            loginButton.addEventListener('click', () => supabaseClient.auth.signInWithOAuth({ provider: 'google', options: { redirectTo: window.location.href } }));
-            logoutButton.addEventListener('click', () => supabaseClient.auth.signOut());
-            sendButton.addEventListener('click', sendMessage);
-            messageInput.addEventListener('keypress', (e) => { if (e.key === 'Enter') sendMessage(); });
+        loadMoreBtn.addEventListener('click', async () => {
+            const offset = chatArea.querySelectorAll('.message-bubble').length;
+            loadMoreBtn.textContent = 'Laden...';
+            await fetchMessages(offset);
+            loadMoreBtn.textContent = 'Oudere berichten laden...';
         });
+        loginButton.addEventListener('click', () => supabaseClient.auth.signInWithOAuth({ provider: 'google', options: { redirectTo: window.location.href } }));
+        logoutButton.addEventListener('click', () => supabaseClient.auth.signOut());
+        sendButton.addEventListener('click', sendMessage);
+        messageInput.addEventListener('keypress', (e) => { if (e.key === 'Enter') sendMessage(); });
     </script>
 </body>
 
