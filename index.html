@@ -353,7 +353,7 @@
                 messageInput.disabled = true;
 
                 try {
-                    const { error } = await supabase.from('messages').insert([{
+                    const { error } = await supabaseClient.from('messages').insert([{
                         content: text,
                         user_name: currentUser.user_metadata.full_name || currentUser.email,
                         user_email: currentUser.email
@@ -385,12 +385,12 @@
                 }
             };
 
-            supabase.auth.onAuthStateChange((event, session) => updateAuthUI(session?.user ?? null));
-            const { data: { session } } = await supabase.auth.getSession();
+            supabaseClient.auth.onAuthStateChange((event, session) => updateAuthUI(session?.user ?? null));
+            const { data: { session } } = await supabaseClient.auth.getSession();
             updateAuthUI(session?.user ?? null);
 
             await fetchMessages();
-            supabase.channel('public:messages').on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'messages' }, p => appendMessageUI(p.new.content, p.new.user_name, p.new.created_at)).subscribe();
+            supabaseClient.channel('public:messages').on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'messages' }, p => appendMessageUI(p.new.content, p.new.user_name, p.new.created_at)).subscribe();
 
             loadMoreBtn.addEventListener('click', async () => {
                 const offset = chatArea.querySelectorAll('.message-bubble').length;
@@ -398,8 +398,8 @@
                 await fetchMessages(offset);
                 loadMoreBtn.textContent = 'Oudere berichten laden...';
             });
-            loginButton.addEventListener('click', () => supabase.auth.signInWithOAuth({ provider: 'google', options: { redirectTo: window.location.href } }));
-            logoutButton.addEventListener('click', () => supabase.auth.signOut());
+            loginButton.addEventListener('click', () => supabaseClient.auth.signInWithOAuth({ provider: 'google', options: { redirectTo: window.location.href } }));
+            logoutButton.addEventListener('click', () => supabaseClient.auth.signOut());
             sendButton.addEventListener('click', sendMessage);
             messageInput.addEventListener('keypress', (e) => { if (e.key === 'Enter') sendMessage(); });
         });
